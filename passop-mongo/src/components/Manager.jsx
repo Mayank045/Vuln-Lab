@@ -53,15 +53,52 @@ const Manager = () => {
     const savePassword = async () => {
         if (form.site.length > 3 && form.username.length > 3 && form.password.length > 3) {
 
-            // If any such id exists in the db, delete it 
-            await fetch("http://localhost:3000/", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: form.id }) })
+            const id = form.id || uuidv4()
 
-            setPasswordArray([...passwordArray, { ...form, id: uuidv4() }])
-            await fetch("http://localhost:3000/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, id: uuidv4() }) })
+            // If editing an existing password, delete the old record
+            if (form.id) {
+                await fetch("http://localhost:3000/", {
+                    method: "DELETE",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ id: form.id })
+                })
+            }
 
-            // Otherwise clear the form and show toast
-            setform({ site: "", username: "", password: "" })
-            toast('Password saved!', {
+            const newPassword = {
+                ...form,
+                id: id
+            }
+
+            // Save to database
+            const response = await fetch("http://localhost:3000/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(newPassword)
+            })
+
+            if (!response.ok) {
+                toast("Error: Password not saved!")
+                return
+            }
+
+            // Update UI
+            setPasswordArray([
+                ...passwordArray.filter(item => item.id !== form.id),
+                newPassword
+            ])
+
+            // Clear form
+            setform({
+                site: "",
+                username: "",
+                password: ""
+            })
+
+            toast("Password saved!", {
                 position: "top-right",
                 autoClose: 5000,
                 hideProgressBar: false,
@@ -70,39 +107,53 @@ const Manager = () => {
                 draggable: true,
                 progress: undefined,
                 theme: "dark",
-            });
+            })
         }
         else {
-            toast('Error: Password not saved!');
+            toast("Error: Password not saved!")
         }
-
     }
 
-    const deletePassword = async (id) => {
-        console.log("Deleting password with id ", id)
-        let c = confirm("Do you really want to delete this password?")
-        if (c) {
-            setPasswordArray(passwordArray.filter(item => item.id !== id))
-            
-            await fetch("http://localhost:3000/", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) })
+   const deletePassword = async (id) => {
+    console.log("Deleting password with id", id)
 
-            toast('Password Deleted!', {
-                position: "top-right",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: true, 
-                draggable: true,
-                progress: undefined,
-                theme: "dark",
-            });
+    const confirmed = confirm("Do you really want to delete this password?")
+
+    if (confirmed) {
+        const response = await fetch("http://localhost:3000/", {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ id })
+        })
+
+        if (!response.ok) {
+            toast("Error: Password not deleted!")
+            return
         }
 
+        setPasswordArray(
+            passwordArray.filter(item => item.id !== id)
+        )
+
+        toast("Password Deleted!", {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "dark",
+        })
     }
+}
 
     const editPassword = (id) => {
-        setform({ ...passwordArray.filter(i => i.id === id)[0], id: id })
-        setPasswordArray(passwordArray.filter(item => item.id !== id))
-    }
+    const password = passwordArray.find(item => item.id === id)
+    setform(password)
+}
 
 
     const handleChange = (e) => {
