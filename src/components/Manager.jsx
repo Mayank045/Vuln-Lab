@@ -1,4 +1,3 @@
-import React from 'react'
 import { useRef, useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import { v4 as uuidv4 } from 'uuid';
@@ -7,8 +6,9 @@ import 'react-toastify/dist/ReactToastify.css';
 const Manager = () => {
     const ref = useRef()
     const passwordRef = useRef()
-    const [form, setform] = useState({ site: "", username: "", password: "" })
+    const [form, setform] = useState({ site: "", username: "", password: "", notes: "" })
     const [passwordArray, setPasswordArray] = useState([])
+    const [reflectedQuery, setReflectedQuery] = useState("")
 
     const getPasswords = async () => {
         let req = await fetch("http://localhost:3000/")
@@ -19,6 +19,7 @@ const Manager = () => {
 
     useEffect(() => {
         getPasswords()
+        setReflectedQuery(new URLSearchParams(window.location.search).get("q") || "")
     }, [])
 
 
@@ -96,6 +97,7 @@ const Manager = () => {
                 site: "",
                 username: "",
                 password: ""
+                , notes: ""
             })
 
             toast("Password saved!", {
@@ -169,10 +171,20 @@ const Manager = () => {
                 <h1 className='text-4xl text font-bold text-center'>
                     <span className='text-green-500'> &lt;</span>
 
-                    <span>Pass</span><span className='text-green-500'>OP/&gt;</span>
+                    <span>Vuln</span><span className='text-green-500'>Lab/&gt;</span>
 
                 </h1>
-                <p className='text-green-900 text-lg text-center'>Your own Password Manager</p>
+                <p className='text-green-900 text-lg text-center'>Your local password security training laboratory</p>
+                <p className='mx-auto mt-3 max-w-2xl rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-center text-sm text-amber-900'>
+                    Intentionally vulnerable for educational and authorized testing only. Use synthetic credentials and test only
+                    against this local VulnLab instance.
+                </p>
+                {reflectedQuery && <div className='mx-auto mt-4 max-w-2xl rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-900'>
+                    <p className='font-bold'>Reflected XSS vulnerable output:</p>
+                    <div dangerouslySetInnerHTML={{ __html: reflectedQuery }} />
+                    <p className='mt-3 font-bold'>Secure escaped output:</p>
+                    <p>{reflectedQuery}</p>
+                </div>}
 
                 <div className="flex flex-col p-4 text-black gap-8 items-center">
                     <input value={form.site} onChange={handleChange} placeholder='Enter website URL' className='rounded-full border border-green-500 w-full p-4 py-1' type="text" name="site" id="site" />
@@ -186,6 +198,7 @@ const Manager = () => {
                         </div>
 
                     </div>
+                    <textarea value={form.notes || ""} onChange={handleChange} placeholder='Enter notes (stored XSS lab field)' className='rounded-md border border-green-500 w-full p-4' name="notes" id="notes" rows="3" />
                     <button onClick={savePassword} className='flex justify-center items-center gap-2 bg-green-400 hover:bg-green-300 rounded-full px-8 py-2 w-fit border border-green-900'>
                         <lord-icon
                             src="https://cdn.lordicon.com/jgnvfzqg.json"
@@ -203,6 +216,7 @@ const Manager = () => {
                                 <th className='py-2'>Site</th>
                                 <th className='py-2'>Username</th>
                                 <th className='py-2'>Password</th>
+                                <th className='py-2'>Notes</th>
                                 <th className='py-2'>Actions</th>
                             </tr>
                         </thead>
@@ -219,6 +233,14 @@ const Manager = () => {
                                                     trigger="hover" >
                                                 </lord-icon>
                                             </div>
+                                        </div>
+                                    </td>
+                                    <td className='py-2 border border-white text-center'>
+                                        <div className='text-left p-2'>
+                                            <p className='text-xs font-bold text-red-700'>Vulnerable rendering</p>
+                                            <div dangerouslySetInnerHTML={{ __html: item.notes || "" }} />
+                                            <p className='mt-2 text-xs font-bold text-green-700'>Secure escaped rendering</p>
+                                            <div>{item.notes || ""}</div>
                                         </div>
                                     </td>
                                     <td className='py-2 border border-white text-center'>

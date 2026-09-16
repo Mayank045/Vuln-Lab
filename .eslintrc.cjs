@@ -18,4 +18,10 @@ module.exports = {
       { allowConstantExport: true },
     ],
   },
+  overrides: [
+    {
+      files: ['backend/**/*.js'],
+      env: { node: true, es2022: true },
+    },
+  ],
 }
