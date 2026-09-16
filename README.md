@@ -1,4 +1,4 @@
-# VulnLab
+﻿# VulnLab
 
 VulnLab is an intentionally vulnerable password-manager application for local
 and authorized web-security training. It preserves the original React/Vite,
